@@ -6,13 +6,12 @@ const UI={moves:document.getElementById('moves'),best:document.getElementById('b
 target:document.getElementById('target'),perfect:document.getElementById('perfectBadge'),
 btnUndo:document.getElementById('btnUndo'),btnReset:document.getElementById('btnReset'),btnPrev:document.getElementById('btnPrev'),btnNext:document.getElementById('btnNext'),
 touchBtns:document.querySelectorAll('[data-dir]'),soundToggle:document.getElementById('soundToggle'),crtToggle:document.getElementById('crtToggle'),
-palette:document.getElementById('palette'),levelSelect:document.getElementById('levelSelect'),btnShare:document.getElementById('btnShare'),btnA2HS:document.getElementById('btnA2HS')};
+palette:document.getElementById('palette'),levelSelect:document.getElementById('levelSelect'),btnShare:document.getElementById('btnShare'),btnA2HS:document.getElementById('btnA2HS'),btnPalette:document.getElementById('btnPalette')};
 
 const LEVELS=["\n  #######\n  #  .  #\n  #  $  #\n  #  @  #\n  #     #\n  #######\n", "\n  #######\n  # . . #\n  # $$  #\n  #  @  #\n  #     #\n  #######\n", "\n   #######\n   #  .  #\n ### # # #\n # $$ $  #\n #   @   #\n #   .   #\n #########\n", "\n  ########\n  #  ..  #\n  # $$$  #\n  #  @   #\n  #      #\n  ########\n", "\n  #########\n  #   .   #\n  #  $$$  #\n  #   @   #\n  #   .   #\n  #       #\n  #########\n", "\n  #########\n  #  . .  #\n  #  $$   #\n  #   @   #\n  #   $   #\n  #   .   #\n  #########\n", "\n  ###########\n  # .     . #\n  # $$#$#$$ #\n  #    @    #\n  #         #\n  ###########\n", "\n  #########\n  #  . .  #\n  #  # #  #\n  # $$@$$ #\n  #  # #  #\n  #  . .  #\n  #########\n", "\n  #########\n  #   .   #\n  #  #$#  #\n  #  $@$  #\n  #  #$#  #\n  #   .   #\n  #########\n", "\n  #########\n  # ...   #\n  # $$$$  #\n  #   @   #\n  #       #\n  #########\n", "\n  #########\n  # .   . #\n  # $$ $$ #\n  #   @   #\n  #  ###  #\n  #   .   #\n  #########\n", "\n  #########\n  # ..    #\n  # $$#   #\n  #  @    #\n  #   #   #\n  #   $$  #\n  #   ..  #\n  #########\n", "\n  #########\n  #  . .  #\n  # $# #$ #\n  #  @    #\n  # $# #$ #\n  #  . .  #\n  #########\n", "\n  #########\n  #   .   #\n  # $$ $$ #\n  #  @    #\n  # $$ $$ #\n  #   .   #\n  #########\n", "\n  #########\n  # .   . #\n  #  $$$  #\n  #  $@$  #\n  #  $$$  #\n  # .   . #\n  #########\n"].map(s=>s.replace(/^\n|\n$/g,'').split('\n').map(r=>r.replace(/\s+$/,'')));
 const TARGETS=[6, 10, 18, 16, 14, 16, 22, 20, 18, 18, 20, 22, 20, 22, 24];
 UI.levelMax.textContent=LEVELS.length.toString();
 
-// Haptics (light)
 function haptic(){ if(navigator.vibrate) try{ navigator.vibrate(10); }catch(e){} }
 
 // Audio
@@ -24,7 +23,7 @@ function beep(n){ if(!audioEnabled) return; const a=sounds[n]; if(!a) return; tr
 const body=document.body; UI.crtToggle.checked=(localStorage.getItem('push81.crt')??'1')==='1';
 function applyCRT(){ if(UI.crtToggle.checked) body.classList.add('crt-boost'); else body.classList.remove('crt-boost'); } applyCRT();
 
-// Palette + auto default
+// Palette
 const root=document.documentElement;
 const PALETTES={
   classic:{goal:'#00d1ff',box:'#ffc14d',boxGoal:'#2bf089',bg:'#0b1022',panel:'#0f1734',ink:'#e8f0ff'},
@@ -32,13 +31,15 @@ const PALETTES={
   amber:{goal:'#ffb000',box:'#ffd277',boxGoal:'#ffcc33',bg:'#201300',panel:'#2a1800',ink:'#ffe9c2'},
   ice:{goal:'#a8e1ff',box:'#b7d0ff',boxGoal:'#d6f3ff',bg:'#0b1220',panel:'#0f1932',ink:'#e9f3ff'}
 };
+const paletteOrder=['classic','phosphor','amber','ice'];
 function applyPalette(n){ const p=PALETTES[n]||PALETTES.classic;
   root.style.setProperty('--goal',p.goal); root.style.setProperty('--box',p.box); root.style.setProperty('--boxGoal',p.boxGoal);
   root.style.setProperty('--bg',p.bg); root.style.setProperty('--panel',p.panel); root.style.setProperty('--ink',p.ink);
 }
-let savedPalette = localStorage.getItem('push81.palette');
-if(!savedPalette){ const isMobile = /Mobi|Android|iPhone|iPad/i.test(navigator.userAgent); savedPalette = isMobile?'phosphor':'amber'; }
-UI.palette.value = savedPalette; applyPalette(savedPalette);
+let savedPalette=localStorage.getItem('push81.palette'); if(!savedPalette){ const isMobile=/Mobi|Android|iPhone|iPad/i.test(navigator.userAgent); savedPalette=isMobile?'phosphor':'amber'; }
+UI.palette.value=savedPalette; applyPalette(savedPalette);
+
+if(UI.btnPalette){ UI.btnPalette.addEventListener('click',()=>{ const i=(paletteOrder.indexOf(UI.palette.value)+1)%paletteOrder.length; const v=paletteOrder[i]; UI.palette.value=v; localStorage.setItem('push81.palette',v); applyPalette(v); haptic(); draw(); }); }
 
 // State
 let levelIndex=+localStorage.getItem('push81.level')||1; if(levelIndex<1||levelIndex>LEVELS.length) levelIndex=1;
@@ -104,7 +105,7 @@ function draw(){
   const px=player.x*S,py=player.y*S; ctx.fillStyle='#e8f0ff'; ctx.fillRect(px+8,py+8,S-16,S-16); ctx.fillStyle=cs.getPropertyValue('--boxGoal').trim()||'#2bf089'; ctx.fillRect(px+12,py+12,S-24,S-24);
 }
 
-// Keyboard (desktop)
+// Keyboard
 addEventListener('keydown', e=>{ const k=e.key.toLowerCase();
   if(k==='arrowup'||k==='w') move(0,-1);
   else if(k==='arrowdown'||k==='s') move(0,1);
@@ -116,10 +117,9 @@ addEventListener('keydown', e=>{ const k=e.key.toLowerCase();
   else if(k==='k') next();
 });
 
-// Touch buttons (sticky bar + HUD buttons share data-dir)
+// Touch buttons
 UI.touchBtns.forEach(b=>{
   b.addEventListener('click',()=>{ const d=b.dataset.dir; if(d==='up') move(0,-1); else if(d==='down') move(0,1); else if(d==='left') move(-1,0); else if(d==='right') move(1,0); else if(d==='reset') reset(); else if(d==='undo') undo(); });
-  // Prevent double-tap zoom on iOS
   b.addEventListener('touchstart',e=>{ e.preventDefault(); }, {passive:false});
 });
 
@@ -131,13 +131,12 @@ UI.soundToggle.addEventListener('change', ()=>{ audioEnabled=UI.soundToggle.chec
 UI.crtToggle.addEventListener('change', ()=>{ localStorage.setItem('push81.crt', UI.crtToggle.checked?'1':'0'); (UI.crtToggle.checked?document.body.classList.add('crt-boost'):document.body.classList.remove('crt-boost')); });
 UI.palette.addEventListener('change', ()=>{ const v=UI.palette.value; localStorage.setItem('push81.palette', v); applyPalette(v); draw(); });
 
-// Fit canvas
-function fitCanvas(){ cvs.width=COLS*S; cvs.height=ROWS*S; draw(); } addEventListener('resize', fitCanvas);
+// Share & A2HS
+let deferredPrompt=null; window.addEventListener('beforeinstallprompt',(e)=>{e.preventDefault();deferredPrompt=e;});
+if(UI.btnA2HS) UI.btnA2HS.addEventListener('click', async ()=>{ if(deferredPrompt){ deferredPrompt.prompt(); deferredPrompt=null; } else { alert('Condividi → Aggiungi alla Home'); } });
+if(UI.btnShare) UI.btnShare.addEventListener('click', async ()=>{ try{ if(navigator.share){ await navigator.share({title:'PUSH-81',text:'Prova questo rompicapo!',url:location.href}); } else { await navigator.clipboard.writeText(location.href); alert('Link copiato!'); } }catch(_){}});
 
-// Share & A2HS helpers (best effort on iOS)
-let deferredPrompt=null; window.addEventListener('beforeinstallprompt', (e)=>{ e.preventDefault(); deferredPrompt=e; });
-if(UI.btnA2HS) UI.btnA2HS.addEventListener('click', async ()=>{ if(deferredPrompt){ deferredPrompt.prompt(); deferredPrompt=null; } else { alert('Per aggiungere alla Home: Condividi → Aggiungi alla Home'); } });
-if(UI.btnShare) UI.btnShare.addEventListener('click', async ()=>{ try{ if(navigator.share){ await navigator.share({title:'PUSH-81', text:'Prova questo rompicapo!', url:location.href}); } else { await navigator.clipboard.writeText(location.href); alert('Link copiato!'); } }catch(_){} });
+function fitCanvas(){ cvs.width=COLS*S; cvs.height=ROWS*S; draw(); } addEventListener('resize', fitCanvas);
 
 // Boot
 parseLevel(levelIndex); fitCanvas();
