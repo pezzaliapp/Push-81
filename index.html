@@ -1,115 +1,66 @@
-<!DOCTYPE html>
-<html lang="it">
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
-  <meta name="theme-color" content="#0b1022">
-  <title>PUSH-81 — Puzzle Arcade (PWA)</title>
-  <meta name="description" content="PUSH-81: rompicapo Arcade-1981. Spingi le casse sui bersagli. PWA installabile, offline, audio 8-bit, CRT.">
-  <link rel="manifest" href="manifest.webmanifest">
-  <link rel="icon" sizes="192x192" href="icons/icon-192.png">
-  <link rel="apple-touch-icon" href="icons/icon-192.png">
-  <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <style>
-    :root{
-      --bg:#0b1022; --panel:#0f1734; --ink:#e8f0ff; --muted:#98a7c7;
-      --accent:#29f07a; --accent2:#00d1ff; --border:#1b2550; --btn:#141d3d;
-    }
-    *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
-    html,body{height:100%;margin:0;background:var(--bg);color:var(--ink);font:16px/1.5 system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,Arial}
-    header{padding:10px 14px;border-bottom:1px solid var(--border);background:linear-gradient(180deg,#0d1636,#0a1230)}
-    header .brand{display:flex;gap:10px;align-items:center}
-    .crt{position:relative;overflow:hidden}
-    .crt:before{
-      content:"";position:absolute;inset:-2px;pointer-events:none;
-      background:
-        radial-gradient(ellipse at center, rgba(0,0,0,.0) 60%, rgba(0,0,0,.35) 100%),
-        repeating-linear-gradient(0deg, rgba(255,255,255,.05) 0px, rgba(255,255,255,.05) 1px, transparent 2px, transparent 3px);
-      mix-blend-mode:overlay; filter:contrast(1.05) saturate(1.1);
-    }
-    .crt-boost canvas{filter:contrast(1.25) saturate(1.25) brightness(1.05) drop-shadow(0 0 8px rgba(41,240,122,.25));}
-    main{display:grid;grid-template-columns:1fr;gap:12px;padding:12px;max-width:980px;margin:0 auto}
-    .hud{display:flex;gap:8px;flex-wrap:wrap;align-items:center;justify-content:space-between;background:var(--panel);border:1px solid var(--border);padding:8px 10px;border-radius:10px}
-    .pill{background:var(--btn);border:1px solid var(--border);padding:6px 10px;border-radius:999px;font-weight:600}
-    .btn{cursor:pointer;background:var(--btn);border:1px solid var(--border);padding:8px 12px;border-radius:8px}
-    .btn.primary{border-color:#1c8550;box-shadow:0 0 0 1px rgba(41,240,122,.1) inset}
-    .grid-wrap{display:grid;place-items:center;background:var(--panel);border:1px solid var(--border);border-radius:12px;padding:10px}
-    canvas{width:100%;max-width:540px;aspect-ratio:1/1;image-rendering:pixelated;touch-action:none;border-radius:8px;border:1px solid var(--border);background:#000}
-    .touch{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;max-width:540px;margin:0 auto}
-    .touch .btn{padding:14px;font-size:18px}
-    .muted{color:var(--muted)}
-    footer{opacity:.9;padding:20px;text-align:center;color:var(--muted)}
-    .link{color:var(--accent2);text-decoration:none}
-    .link:hover{text-decoration:underline}
-    .settings{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
-    @media (min-width:860px){main{grid-template-columns:1fr 320px}.side{align-self:start;position:sticky;top:10px;height:max-content}}
-  </style>
-</head>
-<body class="crt crt-boost">
-  <header>
-    <div class="brand">
-      <img src="icons/icon-192.png" width="28" height="28" alt="PUSH-81">
-      <b>PUSH-81</b>
-      <span class="muted">— Puzzle Arcade (1981 vibes)</span>
-    </div>
-  </header>
-
-  <main>
-    <section class="grid-wrap">
-      <canvas id="game" width="480" height="480" aria-label="Scacchiera di gioco"></canvas>
-      <div class="hud" role="group" aria-label="Pannello di controllo">
-        <div class="settings">
-          <span class="pill">Livello: <span id="levelNo">1</span>/<span id="levelMax">—</span></span>
-          <span class="pill">Mosse: <span id="moves">0</span></span>
-          <span class="pill">Record: <span id="best">—</span></span>
-          <label class="pill" style="display:flex;gap:6px;align-items:center"><input id="soundToggle" type="checkbox" checked>Audio</label>
-          <label class="pill" style="display:flex;gap:6px;align-items:center"><input id="crtToggle" type="checkbox" checked>CRT+</label>
-        </div>
-        <div>
-          <button id="btnUndo" class="btn" title="Annulla (Z)">↶ Undo</button>
-          <button id="btnReset" class="btn" title="Reset (R)">⟲ Reset</button>
-          <button id="btnPrev" class="btn" title="Precedente (J)">⟸</button>
-          <button id="btnNext" class="btn primary" title="Successivo (K)">⟹</button>
-        </div>
-      </div>
-
-      <div class="touch" aria-hidden="false">
-        <button class="btn" data-dir="up">↑</button>
-        <button class="btn" data-dir="reset">⟲</button>
-        <button class="btn" data-dir="undo">↶</button>
-        <button class="btn" data-dir="left">←</button>
-        <button class="btn" data-dir="down">↓</button>
-        <button class="btn" data-dir="right">→</button>
-      </div>
-    </section>
-
-    <aside class="side">
-      <div class="hud" style="display:block">
-        <h3 style="margin:6px 0 4px">Come si gioca</h3>
-        <p class="muted" style="margin:0 0 8px">
-          Spingi le casse <b>$</b> sui bersagli <b>.</b>. Il giocatore è <b>@</b>. Non puoi tirare, solo spingere.
-          Completa il livello nel minor numero di mosse.
-        </p>
-        <ul class="muted" style="padding-left:18px;margin:0 0 10px">
-          <li>Tasti: Frecce o WASD. <b>R</b>=Reset, <b>Z</b>=Undo, <b>J/K</b>=Prev/Next.</li>
-          <li>Touch: usa i pulsanti direzionali o trascina sul canvas.</li>
-          <li>I progressi vengono salvati automaticamente.</li>
-        </ul>
-        <p style="margin:.5rem 0 0"><a class="link" href="readme.html">Istruzioni / README</a></p>
-      </div>
-    </aside>
-  </main>
-
-  <footer>
-    © 2025 pezzaliAPP — MIT • PWA installabile • 100% offline • Audio 8-bit • CRT
-  </footer>
-
-  <script src="app.js"></script>
-  <script>
-    if ('serviceWorker' in navigator) {
-      window.addEventListener('load', () => navigator.serviceWorker.register('service-worker.js'));
-    }
-  </script>
-</body>
-</html>
+<!DOCTYPE html><html lang="it"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<meta name="theme-color" content="#0b1022"><title>PUSH-81 — Puzzle Arcade (PWA)</title>
+<meta name="description" content="PUSH-81: Audio 8-bit, CRT, palette retrò, perfect moves.">
+<link rel="manifest" href="manifest.webmanifest"><link rel="icon" sizes="192x192" href="icons/icon-192.png"><link rel="apple-touch-icon" href="icons/icon-192.png">
+<meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<style>
+:root{--bg:#0b1022;--panel:#0f1734;--ink:#e8f0ff;--muted:#98a7c7;--accent:#29f07a;--accent2:#00d1ff;--border:#1b2550;--btn:#141d3d;--goal:#00d1ff;--box:#ffc14d;--boxGoal:#2bf089}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}html,body{height:100%;margin:0;background:var(--bg);color:var(--ink);font:16px/1.5 system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,Arial}
+header{padding:10px 14px;border-bottom:1px solid var(--border);background:linear-gradient(180deg,#0d1636,#0a1230)}header .brand{display:flex;gap:10px;align-items:center}
+.crt{position:relative;overflow:hidden}.crt:before{content:"";position:absolute;inset:-2px;pointer-events:none;background:radial-gradient(ellipse at center, rgba(0,0,0,.0) 60%, rgba(0,0,0,.35) 100%),repeating-linear-gradient(0deg, rgba(255,255,255,.05) 0px, rgba(255,255,255,.05) 1px, transparent 2px, transparent 3px);mix-blend-mode:overlay;filter:contrast(1.05) saturate(1.1)}
+.crt-boost canvas{filter:contrast(1.25) saturate(1.25) brightness(1.05) drop-shadow(0 0 8px rgba(41,240,122,.25))}
+main{display:grid;grid-template-columns:1fr;gap:12px;padding:12px;max-width:980px;margin:0 auto}
+.hud{display:flex;gap:8px;flex-wrap:wrap;align-items:center;justify-content:space-between;background:var(--panel);border:1px solid var(--border);padding:8px 10px;border-radius:10px}
+.pill{background:var(--btn);border:1px solid var(--border);padding:6px 10px;border-radius:999px;font-weight:600}
+.btn{cursor:pointer;background:var(--btn);border:1px solid var(--border);padding:8px 12px;border-radius:8px}.btn.primary{border-color:#1c8550;box-shadow:0 0 0 1px rgba(41,240,122,.1) inset}
+.grid-wrap{display:grid;place-items:center;background:var(--panel);border:1px solid var(--border);border-radius:12px;padding:10px}
+canvas{width:100%;max-width:540px;aspect-ratio:1/1;image-rendering:pixelated;touch-action:none;border-radius:8px;border:1px solid var(--border);background:#000}
+.touch{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;max-width:540px;margin:0 auto}.touch .btn{padding:14px;font-size:18px}
+.muted{color:var(--muted)}footer{opacity:.9;padding:20px;text-align:center;color:var(--muted)}.link{color:var(--accent2);text-decoration:none}.link:hover{text-decoration:underline}
+.settings{display:flex;gap:8px;align-items:center;flex-wrap:wrap}select{background:var(--btn);color:var(--ink);border:1px solid var(--border);border-radius:8px;padding:6px 10px}
+@media (min-width:860px){main{grid-template-columns:1fr 320px}.side{align-self:start;position:sticky;top:10px;height:max-content}}
+</style></head>
+<body class="crt crt-boost"><header><div class="brand"><img src="icons/icon-192.png" width="28" height="28" alt="PUSH-81"><b>PUSH-81</b><span class="muted">— Puzzle Arcade (1981 vibes)</span></div></header>
+<main>
+<section class="grid-wrap">
+<canvas id="game" width="480" height="480" aria-label="Scacchiera di gioco"></canvas>
+<div class="hud" role="group" aria-label="Pannello di controllo">
+  <div class="settings">
+    <span class="pill">Livello: <span id="levelNo">1</span>/<span id="levelMax">—</span></span>
+    <span class="pill">Mosse: <span id="moves">0</span></span>
+    <span class="pill">Record: <span id="best">—</span></span>
+    <span class="pill">Target: <span id="target">—</span></span>
+    <span id="perfectBadge" class="pill" style="display:none">⭐ Perfect!</span>
+    <label class="pill" style="display:flex;gap:6px;align-items:center"><input id="soundToggle" type="checkbox" checked>Audio</label>
+    <label class="pill" style="display:flex;gap:6px;align-items:center"><input id="crtToggle" type="checkbox" checked>CRT+</label>
+    <label class="pill" style="display:flex;gap:6px;align-items:center">Palette
+      <select id="palette"><option value="classic">Classic</option><option value="phosphor">Verde fosforo</option><option value="amber">Ambra</option><option value="ice">Azzurro ghiaccio</option></select>
+    </label>
+  </div>
+  <div>
+    <button id="btnUndo" class="btn" title="Annulla (Z)">↶ Undo</button>
+    <button id="btnReset" class="btn" title="Reset (R)">⟲ Reset</button>
+    <button id="btnPrev" class="btn" title="Precedente (J)">⟸</button>
+    <button id="btnNext" class="btn primary" title="Successivo (K)">⟹</button>
+  </div>
+</div>
+<div class="touch" aria-hidden="false">
+  <button class="btn" data-dir="up">↑</button>
+  <button class="btn" data-dir="reset">⟲</button>
+  <button class="btn" data-dir="undo">↶</button>
+  <button class="btn" data-dir="left">←</button>
+  <button class="btn" data-dir="down">↓</button>
+  <button class="btn" data-dir="right">→</button>
+</div>
+</section>
+<aside class="side"><div class="hud" style="display:block">
+  <h3 style="margin:6px 0 4px">Come si gioca</h3>
+  <p class="muted" style="margin:0 0 8px">Spingi le casse <b>$</b> sui bersagli <b>.</b>. Non puoi tirare, solo spingere. Chiudi a ≤ <b>Target</b> per ⭐ Perfect.</p>
+  <ul class="muted" style="padding-left:18px;margin:0 0 10px"><li>Frecce/WASD — <b>R</b> Reset — <b>Z</b> Undo — <b>J/K</b> Prev/Next</li><li>Touch: pulsanti o trascina sul canvas</li><li>Salvataggi automatici</li></ul>
+</div></aside>
+</main>
+<footer>© 2025 pezzaliAPP — MIT • PWA installabile • 100% offline • Audio 8-bit • CRT • Palette retrò • Perfect Moves</footer>
+<script src="app.js"></script>
+<script>if('serviceWorker'in navigator){addEventListener('load',()=>navigator.serviceWorker.register('service-worker.js'))}</script>
+</body></html>
