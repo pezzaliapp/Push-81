@@ -1,1 +1,4 @@
-# PUSH-81 v3\n\nPalette retrò + Perfect Moves. Audio 8-bit, CRT+, livelli extra.\n
+# PUSH-81 v4
+
+Auto-palette per device (mobile=verde fosforo, desktop=ambra) + Selettore rapido dei livelli.
+Mantiene: audio 8-bit, CRT+, Perfect Moves, PWA offline.

@@ -1,7 +1,7 @@
 <!DOCTYPE html><html lang="it"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
 <meta name="theme-color" content="#0b1022"><title>PUSH-81 — Puzzle Arcade (PWA)</title>
-<meta name="description" content="PUSH-81: Audio 8-bit, CRT, palette retrò, perfect moves.">
+<meta name="description" content="PUSH-81: Audio 8-bit, CRT, palette retrò (auto per device), perfect moves, selettore livelli.">
 <link rel="manifest" href="manifest.webmanifest"><link rel="icon" sizes="192x192" href="icons/icon-192.png"><link rel="apple-touch-icon" href="icons/icon-192.png">
 <meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <style>
@@ -28,6 +28,9 @@ canvas{width:100%;max-width:540px;aspect-ratio:1/1;image-rendering:pixelated;tou
 <div class="hud" role="group" aria-label="Pannello di controllo">
   <div class="settings">
     <span class="pill">Livello: <span id="levelNo">1</span>/<span id="levelMax">—</span></span>
+    <label class="pill" style="display:flex;gap:6px;align-items:center">Vai a
+      <select id="levelSelect"></select>
+    </label>
     <span class="pill">Mosse: <span id="moves">0</span></span>
     <span class="pill">Record: <span id="best">—</span></span>
     <span class="pill">Target: <span id="target">—</span></span>
@@ -60,7 +63,7 @@ canvas{width:100%;max-width:540px;aspect-ratio:1/1;image-rendering:pixelated;tou
   <ul class="muted" style="padding-left:18px;margin:0 0 10px"><li>Frecce/WASD — <b>R</b> Reset — <b>Z</b> Undo — <b>J/K</b> Prev/Next</li><li>Touch: pulsanti o trascina sul canvas</li><li>Salvataggi automatici</li></ul>
 </div></aside>
 </main>
-<footer>© 2025 pezzaliAPP — MIT • PWA installabile • 100% offline • Audio 8-bit • CRT • Palette retrò • Perfect Moves</footer>
+<footer>© 2025 pezzaliAPP — MIT • PWA installabile • 100% offline • Audio 8-bit • CRT • Palette auto • Selettore livelli</footer>
 <script src="app.js"></script>
 <script>if('serviceWorker'in navigator){addEventListener('load',()=>navigator.serviceWorker.register('service-worker.js'))}</script>
 </body></html>
