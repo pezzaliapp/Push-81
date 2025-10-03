@@ -5,14 +5,12 @@ const S=30,COLS=16,ROWS=16;
 const UI={moves:document.getElementById('moves'),best:document.getElementById('best'),levelNo:document.getElementById('levelNo'),levelMax:document.getElementById('levelMax'),
 target:document.getElementById('target'),perfect:document.getElementById('perfectBadge'),
 btnUndo:document.getElementById('btnUndo'),btnReset:document.getElementById('btnReset'),btnPrev:document.getElementById('btnPrev'),btnNext:document.getElementById('btnNext'),
-touchBtns:document.querySelectorAll('[data-dir]'),soundToggle:document.getElementById('soundToggle'),crtToggle:document.getElementById('crtToggle'),
-palette:document.getElementById('palette'),levelSelect:document.getElementById('levelSelect'),btnShare:document.getElementById('btnShare'),btnA2HS:document.getElementById('btnA2HS'),btnPalette:document.getElementById('btnPalette')};
+touchBtns:document.querySelectorAll('.touch .btn'),soundToggle:document.getElementById('soundToggle'),crtToggle:document.getElementById('crtToggle'),
+palette:document.getElementById('palette'),levelSelect:document.getElementById('levelSelect')};
 
 const LEVELS=["\n  #######\n  #  .  #\n  #  $  #\n  #  @  #\n  #     #\n  #######\n", "\n  #######\n  # . . #\n  # $$  #\n  #  @  #\n  #     #\n  #######\n", "\n   #######\n   #  .  #\n ### # # #\n # $$ $  #\n #   @   #\n #   .   #\n #########\n", "\n  ########\n  #  ..  #\n  # $$$  #\n  #  @   #\n  #      #\n  ########\n", "\n  #########\n  #   .   #\n  #  $$$  #\n  #   @   #\n  #   .   #\n  #       #\n  #########\n", "\n  #########\n  #  . .  #\n  #  $$   #\n  #   @   #\n  #   $   #\n  #   .   #\n  #########\n", "\n  ###########\n  # .     . #\n  # $$#$#$$ #\n  #    @    #\n  #         #\n  ###########\n", "\n  #########\n  #  . .  #\n  #  # #  #\n  # $$@$$ #\n  #  # #  #\n  #  . .  #\n  #########\n", "\n  #########\n  #   .   #\n  #  #$#  #\n  #  $@$  #\n  #  #$#  #\n  #   .   #\n  #########\n", "\n  #########\n  # ...   #\n  # $$$$  #\n  #   @   #\n  #       #\n  #########\n", "\n  #########\n  # .   . #\n  # $$ $$ #\n  #   @   #\n  #  ###  #\n  #   .   #\n  #########\n", "\n  #########\n  # ..    #\n  # $$#   #\n  #  @    #\n  #   #   #\n  #   $$  #\n  #   ..  #\n  #########\n", "\n  #########\n  #  . .  #\n  # $# #$ #\n  #  @    #\n  # $# #$ #\n  #  . .  #\n  #########\n", "\n  #########\n  #   .   #\n  # $$ $$ #\n  #  @    #\n  # $$ $$ #\n  #   .   #\n  #########\n", "\n  #########\n  # .   . #\n  #  $$$  #\n  #  $@$  #\n  #  $$$  #\n  # .   . #\n  #########\n"].map(s=>s.replace(/^\n|\n$/g,'').split('\n').map(r=>r.replace(/\s+$/,'')));
 const TARGETS=[6, 10, 18, 16, 14, 16, 22, 20, 18, 18, 20, 22, 20, 22, 24];
 UI.levelMax.textContent=LEVELS.length.toString();
-
-function haptic(){ if(navigator.vibrate) try{ navigator.vibrate(10); }catch(e){} }
 
 // Audio
 const sounds={};['move','push','undo','win','reset'].forEach(n=>{const a=new Audio('audio/'+n+'.wav');a.preload='auto';sounds[n]=a;});
@@ -23,7 +21,7 @@ function beep(n){ if(!audioEnabled) return; const a=sounds[n]; if(!a) return; tr
 const body=document.body; UI.crtToggle.checked=(localStorage.getItem('push81.crt')??'1')==='1';
 function applyCRT(){ if(UI.crtToggle.checked) body.classList.add('crt-boost'); else body.classList.remove('crt-boost'); } applyCRT();
 
-// Palette
+// Palette + auto default
 const root=document.documentElement;
 const PALETTES={
   classic:{goal:'#00d1ff',box:'#ffc14d',boxGoal:'#2bf089',bg:'#0b1022',panel:'#0f1734',ink:'#e8f0ff'},
@@ -31,15 +29,13 @@ const PALETTES={
   amber:{goal:'#ffb000',box:'#ffd277',boxGoal:'#ffcc33',bg:'#201300',panel:'#2a1800',ink:'#ffe9c2'},
   ice:{goal:'#a8e1ff',box:'#b7d0ff',boxGoal:'#d6f3ff',bg:'#0b1220',panel:'#0f1932',ink:'#e9f3ff'}
 };
-const paletteOrder=['classic','phosphor','amber','ice'];
 function applyPalette(n){ const p=PALETTES[n]||PALETTES.classic;
   root.style.setProperty('--goal',p.goal); root.style.setProperty('--box',p.box); root.style.setProperty('--boxGoal',p.boxGoal);
   root.style.setProperty('--bg',p.bg); root.style.setProperty('--panel',p.panel); root.style.setProperty('--ink',p.ink);
 }
-let savedPalette=localStorage.getItem('push81.palette'); if(!savedPalette){ const isMobile=/Mobi|Android|iPhone|iPad/i.test(navigator.userAgent); savedPalette=isMobile?'phosphor':'amber'; }
-UI.palette.value=savedPalette; applyPalette(savedPalette);
-
-if(UI.btnPalette){ UI.btnPalette.addEventListener('click',()=>{ const i=(paletteOrder.indexOf(UI.palette.value)+1)%paletteOrder.length; const v=paletteOrder[i]; UI.palette.value=v; localStorage.setItem('push81.palette',v); applyPalette(v); haptic(); draw(); }); }
+let savedPalette = localStorage.getItem('push81.palette');
+if(!savedPalette){ const isMobile = /Mobi|Android|iPhone|iPad/i.test(navigator.userAgent); savedPalette = isMobile?'phosphor':'amber'; }
+UI.palette.value = savedPalette; applyPalette(savedPalette);
 
 // State
 let levelIndex=+localStorage.getItem('push81.level')||1; if(levelIndex<1||levelIndex>LEVELS.length) levelIndex=1;
@@ -67,16 +63,16 @@ function move(dx,dy){
   const nx=player.x+dx, ny=player.y+dy; if(isWall(nx,ny)) return;
   if(hasBox(nx,ny)){ const bx=nx+dx, by=ny+dy; if(isWall(bx,by)||hasBox(bx,by)) return;
     history.push({player:{...player},boxes:new Set(boxes),moves}); boxes.delete(key(nx,ny)); boxes.add(key(bx,by));
-    player.x=nx; player.y=ny; moves++; updateHUD(); draw(); checkWin(); beep('push'); haptic();
+    player.x=nx; player.y=ny; moves++; updateHUD(); draw(); checkWin(); beep('push');
   } else {
-    history.push({player:{...player},boxes:new Set(boxes),moves}); player.x=nx; player.y=ny; moves++; updateHUD(); draw(); checkWin(); beep('move'); haptic();
+    history.push({player:{...player},boxes:new Set(boxes),moves}); player.x=nx; player.y=ny; moves++; updateHUD(); draw(); checkWin(); beep('move');
   }
 }
 
-function undo(){ const h=history.pop(); if(!h) return; player=h.player; boxes=h.boxes; moves=h.moves; updateHUD(); draw(); beep('undo'); haptic(); }
-function reset(){ parseLevel(levelIndex); beep('reset'); haptic(); }
-function prev(){ levelIndex=Math.max(1,levelIndex-1); localStorage.setItem('push81.level', levelIndex); parseLevel(levelIndex); haptic(); }
-function next(){ levelIndex=Math.min(LEVELS.length,levelIndex+1); localStorage.setItem('push81.level', levelIndex); parseLevel(levelIndex); haptic(); }
+function undo(){ const h=history.pop(); if(!h) return; player=h.player; boxes=h.boxes; moves=h.moves; updateHUD(); draw(); beep('undo'); }
+function reset(){ parseLevel(levelIndex); beep('reset'); }
+function prev(){ levelIndex=Math.max(1,levelIndex-1); localStorage.setItem('push81.level', levelIndex); parseLevel(levelIndex); }
+function next(){ levelIndex=Math.min(LEVELS.length,levelIndex+1); localStorage.setItem('push81.level', levelIndex); parseLevel(levelIndex); }
 
 function updateHUD(){
   UI.levelNo.textContent = String(levelIndex);
@@ -105,7 +101,7 @@ function draw(){
   const px=player.x*S,py=player.y*S; ctx.fillStyle='#e8f0ff'; ctx.fillRect(px+8,py+8,S-16,S-16); ctx.fillStyle=cs.getPropertyValue('--boxGoal').trim()||'#2bf089'; ctx.fillRect(px+12,py+12,S-24,S-24);
 }
 
-// Keyboard
+// Controls
 addEventListener('keydown', e=>{ const k=e.key.toLowerCase();
   if(k==='arrowup'||k==='w') move(0,-1);
   else if(k==='arrowdown'||k==='s') move(0,1);
@@ -118,23 +114,18 @@ addEventListener('keydown', e=>{ const k=e.key.toLowerCase();
 });
 
 // Touch buttons
-UI.touchBtns.forEach(b=>{
-  b.addEventListener('click',()=>{ const d=b.dataset.dir; if(d==='up') move(0,-1); else if(d==='down') move(0,1); else if(d==='left') move(-1,0); else if(d==='right') move(1,0); else if(d==='reset') reset(); else if(d==='undo') undo(); });
-  b.addEventListener('touchstart',e=>{ e.preventDefault(); }, {passive:false});
-});
+UI.touchBtns.forEach(b=>b.addEventListener('click', ()=>{ const d=b.dataset.dir;
+  if(d==='up') move(0,-1); else if(d==='down') move(0,1); else if(d==='left') move(-1,0); else if(d==='right') move(1,0);
+  else if(d==='reset') reset(); else if(d==='undo') undo();
+}));
 
 // Level select
-document.getElementById('levelSelect').addEventListener('change', e=>{ levelIndex = parseInt(e.target.value,10)||1; localStorage.setItem('push81.level', levelIndex); parseLevel(levelIndex); });
+UI.levelSelect.addEventListener('change', ()=>{ levelIndex = parseInt(UI.levelSelect.value,10)||1; localStorage.setItem('push81.level', levelIndex); parseLevel(levelIndex); });
 
 // Toggles
 UI.soundToggle.addEventListener('change', ()=>{ audioEnabled=UI.soundToggle.checked; localStorage.setItem('push81.audio', audioEnabled?'1':'0'); });
 UI.crtToggle.addEventListener('change', ()=>{ localStorage.setItem('push81.crt', UI.crtToggle.checked?'1':'0'); (UI.crtToggle.checked?document.body.classList.add('crt-boost'):document.body.classList.remove('crt-boost')); });
 UI.palette.addEventListener('change', ()=>{ const v=UI.palette.value; localStorage.setItem('push81.palette', v); applyPalette(v); draw(); });
-
-// Share & A2HS
-let deferredPrompt=null; window.addEventListener('beforeinstallprompt',(e)=>{e.preventDefault();deferredPrompt=e;});
-if(UI.btnA2HS) UI.btnA2HS.addEventListener('click', async ()=>{ if(deferredPrompt){ deferredPrompt.prompt(); deferredPrompt=null; } else { alert('Condividi → Aggiungi alla Home'); } });
-if(UI.btnShare) UI.btnShare.addEventListener('click', async ()=>{ try{ if(navigator.share){ await navigator.share({title:'PUSH-81',text:'Prova questo rompicapo!',url:location.href}); } else { await navigator.clipboard.writeText(location.href); alert('Link copiato!'); } }catch(_){}});
 
 function fitCanvas(){ cvs.width=COLS*S; cvs.height=ROWS*S; draw(); } addEventListener('resize', fitCanvas);
 
